@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: whatsapp-ai-bot
+    env: node
+    plan: starter  # Cambiar a 'free' si prefieres el plan gratuito
+    buildCommand: npm install
+    startCommand: npm start
+    
+    envVars:
+      # Variables obligatorias
+      - key: NODE_ENV
+        value: production
+      
+      - key: PORT
+        value: 3001
+      
+      - key: BOT_MODE
+        value: openai
+      
+      - key: AUTO_BOT_ENABLED
+        value: true
+      
+      - key: AUTO_INIT
+        value: true
+      
+      - key: LOG_LEVEL
+        value: error  # Usar 'error' o 'silent' en producción
+      
+      # OpenAI API Key (debes configurarla en el dashboard)
+      - key: OPENAI_API_KEY
+        sync: false  # Configurar manualmente en el dashboard por seguridad
+      
+      # Variables opcionales
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      
+      - key: BOT_COOLDOWN_MS
+        value: 3000
+      
+      - key: TYPING_DELAY_MS
+        value: 1000
+      
+      - key: MESSAGE_GROUPING_DELAY
+        value: 3000
+      
+      - key: MAX_GROUPED_MESSAGES
+        value: 5
+    
+    # Persistencia de sesión de WhatsApp
+    disk:
+      name: whatsapp-session
+      mountPath: /app/baileys_auth
+      sizeGB: 1
+    
+    # Health check
+    healthCheckPath: /health

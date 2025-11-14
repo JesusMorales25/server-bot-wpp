@@ -1,0 +1,35 @@
+{
+  "name": "wpp-ai-connector-backend",
+  "version": "2.0.0",
+  "description": "WhatsApp AI Bot Backend with Baileys (no Puppeteer)",
+  "main": "whatsapp-baileys-server.js",
+  "scripts": {
+    "start": "node whatsapp-baileys-server.js",
+    "dev": "nodemon whatsapp-baileys-server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.8",
+    "cors": "^2.8.5",
+    "dotenv": "17.2.3",
+    "express": "^4.19.2",
+    "express-session": "1.18.2",
+    "openai": "^4.70.3",
+    "pino": "^8.16.0",
+    "qrcode": "^1.5.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "ai",
+    "automation",
+    "baileys"
+  ],
+  "author": "JesusMorales25",
+  "license": "MIT"
+}

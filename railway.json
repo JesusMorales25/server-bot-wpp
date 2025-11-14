@@ -1,0 +1,14 @@
+{
+  "name": "whatsapp-ai-connector",
+  "buildCommand": "npm install",
+  "startCommand": "npm start",
+  "healthcheckPath": "/health",
+  "port": 3001,
+  "environment": "node",
+  "volumes": [
+    {
+      "name": "whatsapp-session",
+      "mountPath": "/app/session_data"
+    }
+  ]
+}

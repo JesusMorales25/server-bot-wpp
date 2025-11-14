@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Login - WhatsApp Bot Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(59,130,246,0.3), transparent);
+            border-radius: 50%;
+            top: -200px;
+            right: -200px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(6,182,212,0.3), transparent);
+            border-radius: 50%;
+            bottom: -150px;
+            left: -150px;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.1); }
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            border-radius: 28px;
+            box-shadow: 
+                0 25px 80px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            padding: 48px;
+            max-width: 440px;
+            width: 100%;
+            animation: fadeIn 0.6s ease-out;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            display: block;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0) rotate(-180deg); }
+            to { transform: scale(1) rotate(0); }
+        }
+
+        h1 {
+            color: #0f172a;
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #0f172a;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.2px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 16px 48px 16px 20px;
+            border: 2px solid #cbd5e1;
+            border-radius: 14px;
+            font-size: 15px;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+            transition: all 0.3s;
+            background: white;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
+        }
+
+        input[type="password"]::placeholder {
+            color: #94a3b8;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 4px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            color: #64748b;
+        }
+
+        .toggle-password:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 32px;
+            box-shadow: 0 4px 14px rgba(59,130,246,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-login:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(59,130,246,0.5);
+        }
+
+        .btn-login:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-login:disabled {
+            background: linear-gradient(135deg, #94a3b8, #64748b);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .alert {
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 13px;
+            display: none;
+            animation: slideDown 0.3s ease;
+            font-weight: 600;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #991b1b;
+            border-left: 4px solid #dc2626;
+            box-shadow: 0 2px 8px rgba(220,38,38,0.1);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+            border-left: 4px solid #10b981;
+            box-shadow: 0 2px 8px rgba(16,185,129,0.1);
+        }
+
+        .help-text {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 10px;
+            line-height: 1.5;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            padding: 14px 16px;
+            border-radius: 12px;
+            border-left: 3px solid #3b82f6;
+            font-weight: 500;
+        }
+
+        .help-text code {
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Monaco', monospace;
+            font-size: 12px;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .security-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 28px;
+            padding-top: 24px;
+            border-top: 1px solid #cbd5e1;
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .security-badge svg {
+            width: 18px;
+            height: 18px;
+            fill: #10b981;
+            filter: drop-shadow(0 2px 4px rgba(16, 185, 129, 0.3));
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-login.loading .btn-text {
+            display: none;
+        }
+
+        .btn-login.loading .spinner {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            body {
+                padding: 12px;
+            }
+            
+            .login-container {
+                padding: 32px 24px;
+                border-radius: 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+            
+            .subtitle {
+                font-size: 13px;
+                margin-bottom: 24px;
+            }
+
+            .logo-icon {
+                font-size: 52px;
+                margin-bottom: 12px;
+            }
+            
+            .logo {
+                margin-bottom: 24px;
+            }
+            
+            input[type="password"] {
+                padding: 14px 44px 14px 16px;
+                font-size: 14px;
+            }
+            
+            .btn-login {
+                padding: 14px;
+                font-size: 14px;
+                margin-top: 24px;
+            }
+            
+            .form-group {
+                margin-bottom: 20px;
+            }
+            
+            label {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+            
+            .help-text {
+                font-size: 12px;
+                padding: 12px 14px;
+                margin-top: 8px;
+            }
+            
+            .help-text code {
+                font-size: 11px;
+                padding: 2px 6px;
+            }
+            
+            .alert {
+                padding: 12px 16px;
+                font-size: 12px;
+                margin-bottom: 20px;
+            }
+            
+            .security-badge {
+                margin-top: 24px;
+                padding-top: 20px;
+                font-size: 12px;
+            }
+            
+            .security-badge svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+            
+            .login-container {
+                padding: 24px 16px;
+                border-radius: 16px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .logo-icon {
+                font-size: 48px;
+            }
+            
+            input[type="password"] {
+                padding: 12px 40px 12px 14px;
+                font-size: 13px;
+            }
+            
+            .btn-login {
+                padding: 12px;
+                font-size: 13px;
+            }
+            
+            .toggle-password {
+                right: 12px;
+                font-size: 18px;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .login-container {
+                padding: 32px 40px;
+            }
+            
+            .logo {
+                margin-bottom: 24px;
+            }
+            
+            .logo-icon {
+                font-size: 52px;
+                margin-bottom: 12px;
+            }
+            
+            .security-badge {
+                margin-top: 20px;
+                padding-top: 16px;
+            }
+        }
+
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .login-container {
+                max-width: 480px;
+                padding: 40px;
+            }
+        }
+        
+        *:focus-visible {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <span class="logo-icon">🔐</span>
+            <h1>WhatsApp Bot Manager</h1>
+            <p class="subtitle">Acceso seguro al QR Viewer</p>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="accessKey">
+                    🔑 Access Key
+                </label>
+                <div class="input-wrapper">
+                    <input 
+                        type="password" 
+                        id="accessKey" 
+                        name="accessKey" 
+                        placeholder="Ingresa tu QR Access Key"
+                        autocomplete="off"
+                        required
+                    />
+                    <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar contraseña">
+                        👁️
+                    </button>
+                </div>
+                <p class="help-text">
+                    💡 Esta key se encuentra en tu archivo .env como <code>QR_ACCESS_KEY</code>
+                </p>
+            </div>
+
+            <button type="submit" class="btn-login" id="loginBtn">
+                <span class="btn-text">🚀 Acceder al QR Viewer</span>
+                <div class="spinner"></div>
+            </button>
+        </form>
+
+        <div class="security-badge">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+            </svg>
+            <span>Conexión segura con autenticación</span>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const alertBox = document.getElementById('alert');
+        const loginBtn = document.getElementById('loginBtn');
+        const accessKeyInput = document.getElementById('accessKey');
+        const togglePassword = document.getElementById('togglePassword');
+
+        // Toggle password visibility
+        togglePassword.addEventListener('click', () => {
+            const type = accessKeyInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            accessKeyInput.setAttribute('type', type);
+            togglePassword.textContent = type === 'password' ? '👁️' : '🙈';
+        });
+
+        function showAlert(message, type) {
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type}`;
+            alertBox.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertBox.style.display = 'none';
+                }, 2000);
+            }
+        }
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                loginBtn.classList.add('loading');
+                loginBtn.disabled = true;
+                accessKeyInput.disabled = true;
+                togglePassword.disabled = true;
+            } else {
+                loginBtn.classList.remove('loading');
+                loginBtn.disabled = false;
+                accessKeyInput.disabled = false;
+                togglePassword.disabled = false;
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const accessKey = accessKeyInput.value.trim();
+            
+            if (!accessKey) {
+                showAlert('❌ Por favor ingresa tu Access Key', 'error');
+                return;
+            }
+
+            setLoading(true);
+            alertBox.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ accessKey }),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('✅ Autenticación exitosa. Redirigiendo...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/qr-viewer';
+                    }, 800);
+                } else {
+                    showAlert(`❌ ${data.error || 'Access Key inválida'}`, 'error');
+                    accessKeyInput.value = '';
+                    accessKeyInput.focus();
+                }
+            } catch (error) {
+                console.error('Error de login:', error);
+                showAlert('❌ Error de conexión. Verifica que el servidor esté activo.', 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Focus automático en el input al cargar
+        accessKeyInput.focus();
+
+        // Efecto de partículas en el fondo (opcional)
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            document.body.style.backgroundPosition = `${x * 50}px ${y * 50}px`;
+        });
+    </script>
+</body>
+</html>

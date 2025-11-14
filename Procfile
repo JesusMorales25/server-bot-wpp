@@ -1,0 +1,1 @@
+web: node whatsapp-qr-server.js
