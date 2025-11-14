@@ -424,6 +424,7 @@
         <div class="buttons" id="buttons" style="display: none;">
             <button class="btn-primary" onclick="refreshQR()">🔄 Actualizar</button>
             <button class="btn-secondary" onclick="toggleBot()"><span id="botIcon"></span> <span id="botText">Bot</span></button>
+            <button class="btn-danger" onclick="disconnectWhatsApp()" id="disconnectBtn" style="display:none;">📱 Desconectar WhatsApp</button>
             <button class="btn-danger" onclick="logout()">🚪 Salir</button>
         </div>
     </div>
@@ -470,6 +471,51 @@
             }
         }
         
+        async function disconnectWhatsApp() {
+            if (!confirm('⚠️ ¿Desconectar WhatsApp?\n\nEsto cerrará la sesión actual y generará un nuevo QR para escanear otro número.\n\n¿Continuar?')) return;
+            
+            try {
+                const btn = event.target;
+                btn.disabled = true;
+                btn.textContent = '⏳ Desconectando...';
+                
+                // Primero limpiamos la sesión
+                const res = await fetch('/api/whatsapp/clear-session', { 
+                    method: 'POST', 
+                    credentials: 'include' 
+                });
+                
+                if (res.ok) {
+                    alert('✅ WhatsApp desconectado!\n\nGenerando nuevo QR en 3 segundos...');
+                    
+                    // Esperar 2 segundos y luego inicializar de nuevo
+                    setTimeout(async () => {
+                        const initRes = await fetch('/api/whatsapp/initialize', { 
+                            method: 'POST', 
+                            credentials: 'include' 
+                        });
+                        
+                        if (initRes.ok) {
+                            // Esperar 3 segundos más para que se genere el QR
+                            setTimeout(() => {
+                                loadQR();
+                                alert('✅ Nuevo QR generado!\n\nPuedes escanear con otro número de WhatsApp.');
+                            }, 3000);
+                        } else {
+                            alert('⚠️ Error al generar nuevo QR. Recarga la página.');
+                        }
+                    }, 2000);
+                } else {
+                    alert('❌ Error al desconectar');
+                    btn.disabled = false;
+                    btn.textContent = '🔌 Desconectar WhatsApp';
+                }
+            } catch (e) {
+                alert('❌ Error de conexión');
+                console.error(e);
+            }
+        }
+        
         async function loadQR() {
             try {
                 const res = await fetch('/api/whatsapp/status', { credentials: 'include' });
@@ -477,6 +523,7 @@
                 updateStatus(data.status);
                 updateContent(data);
                 updateBot(data.autoBotEnabled);
+                updateDisconnectButton(data.status); // Mostrar/ocultar botón de desconectar
                 document.getElementById('buttons').style.display = 'flex';
             } catch (e) {
                 document.getElementById('content').innerHTML = '<div class="loading"><p style="color:#ef4444;">Error de conexión</p></div>';
@@ -519,6 +566,12 @@
                         <div class="info-card"><div class="info-label">📤 Enviados</div><div class="info-value">${data.stats.messagesSent||0}</div></div>
                         <div class="info-card"><div class="info-label">⏱️ Uptime</div><div class="info-value">${formatTime(data.stats.uptime||0)}</div></div>
                         <div class="info-card"><div class="info-label">🤖 Respuestas</div><div class="info-value">${data.stats.autoReplies||0}</div></div>
+                    </div>
+                    <div style="margin-top:24px;text-align:center;">
+                        <button class="btn-danger" onclick="disconnectWhatsApp()" style="width:100%;max-width:300px;">
+                            🔌 Desconectar WhatsApp
+                        </button>
+                        <p style="color:#64748b;font-size:12px;margin-top:8px;">Cierra la sesión actual y genera un nuevo QR</p>
                     </div>
                 `;
             } else if (data.qrCode) {
@@ -571,9 +624,20 @@
             }
         }
         function updateBot(enabled) {
-            document.getElementById('botIcon').textContent = enabled ? '' : '';
+            document.getElementById('botIcon').textContent = enabled ? '⏸' : '▶';
             document.getElementById('botText').textContent = enabled ? 'Pausar' : 'Activar';
         }
+        
+        function updateDisconnectButton(status) {
+            const btn = document.getElementById('disconnectBtn');
+            // Mostrar botón solo cuando está conectado
+            if (status === 'connected') {
+                btn.style.display = 'block';
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+        
         function formatTime(s) {
             if (s < 60) return s + 's';
             if (s < 3600) return Math.floor(s/60) + 'm';

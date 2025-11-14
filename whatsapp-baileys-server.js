@@ -615,6 +615,26 @@ async function connectToWhatsApp() {
       // Conexión abierta (autenticado)
       if (connection === 'open') {
         console.log('✅ WhatsApp conectado exitosamente!');
+        
+        // Obtener información del número conectado
+        const phoneNumber = sock.user?.id || 'desconocido';
+        const jid = sock.user?.jid || phoneNumber;
+        
+        console.log('📱 Número conectado:', phoneNumber.replace('@s.whatsapp.net', ''));
+        console.log('🆔 JID:', jid);
+        
+        // Verificar si es cuenta Business API (estos números suelen tener características especiales)
+        if (sock.user?.verifiedName) {
+          console.log('✅ Nombre verificado:', sock.user.verifiedName);
+        }
+        
+        // IMPORTANTE: Si es cuenta Business API oficial, advertir
+        if (sock.user?.businessProfile || phoneNumber.includes('business')) {
+          console.log('⚠️ ADVERTENCIA: Cuenta de negocio detectada');
+          console.log('⚠️ Si esta cuenta usa Meta Business API oficial, puede tener problemas');
+          console.log('⚠️ Recomendación: Usar cuenta personal de WhatsApp para Baileys');
+        }
+        
         connectionStatus = 'connected';
         isClientReady = true;
         qrCodeData = null;
@@ -696,11 +716,26 @@ async function connectToWhatsApp() {
 
 async function handleIncomingMessage(msg) {
   try {
-    console.log('📩 Mensaje recibido:', {
-      fromMe: msg.key.fromMe,
-      hasMessage: !!msg.message,
-      messageType: msg.message ? Object.keys(msg.message)[0] : 'none'
-    });
+    const from = msg.key.remoteJid;
+    const fromNumber = from?.replace('@s.whatsapp.net', '').replace('@g.us', '');
+    
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📩 NUEVO MENSAJE ENTRANTE');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📱 Remitente:', fromNumber);
+    console.log('🆔 Chat ID:', from);
+    console.log('🔑 Message ID:', msg.key.id);
+    console.log('👤 Es mío:', msg.key.fromMe ? 'SÍ (será ignorado)' : 'NO');
+    console.log('📝 Tiene contenido:', !!msg.message ? 'SÍ' : 'NO');
+    console.log('👥 Es grupo:', from?.endsWith('@g.us') ? 'SÍ' : 'NO');
+    
+    if (msg.message) {
+      const messageTypes = Object.keys(msg.message);
+      console.log('📦 Tipos de mensaje:', messageTypes.join(', '));
+      console.log('📄 Detalles:', JSON.stringify(msg.message, null, 2).substring(0, 200) + '...');
+    }
+    
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     // Ignorar mensajes propios
     if (msg.key.fromMe) {
@@ -716,7 +751,7 @@ async function handleIncomingMessage(msg) {
     
     // Extraer información del mensaje
     const messageId = msg.key.id;
-    const from = msg.key.remoteJid; // Número del remitente
+    // from ya declarado arriba
     
     // Extraer texto del mensaje según el tipo (iPhone, Android, Web, etc.)
     let messageText = '';
@@ -745,20 +780,26 @@ async function handleIncomingMessage(msg) {
     } else {
       // Tipo de mensaje no soportado para bot IA
       console.log(`⚠️ Tipo de mensaje no soportado para bot IA:`, Object.keys(msg.message));
+      console.log('💡 Tipos soportados: conversation, extendedTextMessage, imageMessage (caption), videoMessage (caption)');
       return;
     }
     
-    console.log(`💬 Mensaje extraído de ${from}: "${messageText}"`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`💬 TEXTO EXTRAÍDO`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`Contenido: "${messageText}"`);
+    console.log(`Longitud: ${messageText.length} caracteres`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     
     // Si no hay texto, ignorar
     if (!messageText.trim()) {
-      console.log(`⚠️ Mensaje sin texto válido de ${from}`);
+      console.log(`⚠️ Mensaje sin texto válido - ignorando`);
       return;
     }
     
     // Evitar procesar el mismo mensaje dos veces
     if (processedMessages.has(messageId)) {
-      console.log(`⏩ Mensaje duplicado ignorado: ${messageId}`);
+      console.log(`⏩ Mensaje duplicado ignorado (ya procesado): ${messageId}`);
       return;
     }
     processedMessages.add(messageId);
@@ -767,18 +808,26 @@ async function handleIncomingMessage(msg) {
     if (processedMessages.size > 1000) {
       const toDelete = Array.from(processedMessages).slice(0, 500);
       toDelete.forEach(id => processedMessages.delete(id));
+      console.log(`🧹 Limpieza de cache: ${toDelete.length} mensajes antiguos eliminados`);
     }
     
     botStats.messagesReceived++;
     
-    console.log(`📊 Stats: Recibidos=${botStats.messagesReceived}, Bot=${autoBotEnabled ? 'ON' : 'OFF'}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`📊 ESTADO DEL BOT`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`Mensajes recibidos: ${botStats.messagesReceived}`);
+    console.log(`Bot activado: ${autoBotEnabled ? '✅ SÍ' : '❌ NO'}`);
+    console.log(`Modo: ${BOT_CONFIG.MODE}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     
     if (!autoBotEnabled) {
-      console.log(`🤖 Bot desactivado - mensaje ignorado`);
+      console.log(`🤖 Bot está DESACTIVADO - mensaje NO será procesado`);
+      console.log(`💡 Para activar: POST /api/whatsapp/toggle-bot con enabled: true`);
       return;
     }
     
-    console.log(`⚡ Agrupando mensaje para procesar...`);
+    console.log(`⚡ ✅ Bot ACTIVO - Procediendo a agrupar y procesar mensaje...`);
     
     // **NUEVA LÓGICA: Agrupar mensajes consecutivos**
     await groupAndProcessMessage(from, messageText, msg);
@@ -807,6 +856,7 @@ async function groupAndProcessMessage(chatId, messageText, originalMessage) {
     
     if (!group) {
       // Crear nuevo grupo
+      console.log(`📦 Creando nuevo grupo de mensajes para ${chatId}`);
       group = {
         messages: [],
         timeout: null,
@@ -815,6 +865,8 @@ async function groupAndProcessMessage(chatId, messageText, originalMessage) {
         originalMessage: originalMessage
       };
       messageGroups.set(chatId, group);
+    } else {
+      console.log(`📦 Agregando a grupo existente (${group.messages.length} mensajes previos)`);
     }
     
     // Agregar mensaje al grupo
@@ -823,21 +875,25 @@ async function groupAndProcessMessage(chatId, messageText, originalMessage) {
       timestamp: now
     });
     
+    console.log(`✅ Mensaje agregado al grupo: ${group.messages.length}/${BOT_CONFIG.MAX_GROUPED_MESSAGES} mensajes`);
     log.debug(`Mensaje agrupado: "${messageText.substring(0, 30)}..." (${group.messages.length}/${BOT_CONFIG.MAX_GROUPED_MESSAGES})`);
     
     // Limpiar timeout anterior si existe
     if (group.timeout) {
       clearTimeout(group.timeout);
+      console.log(`⏱️ Timeout anterior cancelado - esperando más mensajes...`);
     }
     
     // Si alcanzamos el máximo de mensajes, procesar inmediatamente
     if (group.messages.length >= BOT_CONFIG.MAX_GROUPED_MESSAGES) {
+      console.log(`🔥 Máximo de mensajes alcanzado (${BOT_CONFIG.MAX_GROUPED_MESSAGES}) - Procesando INMEDIATAMENTE`);
       log.info(`Máximo alcanzado (${BOT_CONFIG.MAX_GROUPED_MESSAGES}), procesando grupo`);
       await processGroupedMessages(chatId);
       return;
     }
     
     // Configurar nuevo timeout para procesar el grupo
+    console.log(`⏱️ Configurando timeout de ${BOT_CONFIG.MESSAGE_GROUPING_DELAY/1000}s para procesar grupo`);
     group.timeout = setTimeout(async () => {
       await processGroupedMessages(chatId);
     }, BOT_CONFIG.MESSAGE_GROUPING_DELAY);
@@ -853,16 +909,26 @@ async function groupAndProcessMessage(chatId, messageText, originalMessage) {
 
 async function processGroupedMessages(chatId) {
   try {
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`📨 PROCESANDO GRUPO DE MENSAJES`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    
     const group = messageGroups.get(chatId);
     if (!group || group.messages.length === 0) {
+      console.log(`⚠️ No hay mensajes para procesar en grupo`);
       return;
     }
+    
+    console.log(`📊 Chat: ${chatId}`);
+    console.log(`📦 Mensajes en grupo: ${group.messages.length}`);
     
     // ✅ VERIFICAR COOLDOWN AQUÍ - después de agrupar mensajes
     const now = Date.now();
     const lastProcessed = userCooldowns.get(chatId);
     if (lastProcessed && (now - lastProcessed) < BOT_CONFIG.COOLDOWN_MS) {
       const remainingTime = BOT_CONFIG.COOLDOWN_MS - (now - lastProcessed);
+      console.log(`⏸️ Usuario en cooldown: ${Math.ceil(remainingTime/1000)}s restantes`);
+      console.log(`❌ Ignorando ${group.messages.length} mensaje(s) - intenta después`);
       log.debug(`Usuario en cooldown (${Math.ceil(remainingTime/1000)}s), ignorando ${group.messages.length} msgs`);
       messageGroups.delete(chatId);
       if (group.timeout) {
@@ -887,6 +953,12 @@ async function processGroupedMessages(chatId) {
     const messageCount = group.messages.length;
     const timeSpan = Date.now() - group.timestamp;
     
+    console.log(`✅ Procesando ${messageCount} mensaje(s) agrupado(s)`);
+    console.log(`⏱️ Tiempo transcurrido: ${timeSpan}ms`);
+    console.log(`📝 Contexto completo (${contextualMessage.length} caracteres):`);
+    console.log(`   "${contextualMessage.substring(0, 100)}${contextualMessage.length > 100 ? '...' : ''}"`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    
     log.info(`Procesando ${messageCount} mensaje${messageCount > 1 ? 's' : ''} agrupado${messageCount > 1 ? 's' : ''} (${timeSpan}ms)`);
     log.debug(`Contexto: "${contextualMessage.substring(0, 80)}${contextualMessage.length > 80 ? '...' : ''}"`);
     
@@ -895,6 +967,7 @@ async function processGroupedMessages(chatId) {
     
     // Actualizar cooldown del usuario
     userCooldowns.set(chatId, Date.now());
+    console.log(`⏱️ Cooldown aplicado para ${chatId}: ${BOT_CONFIG.COOLDOWN_MS/1000}s`);
     
     // Limpiar cooldowns antiguos (mayores a 1 hora)
     const oneHourAgo = Date.now() - (60 * 60 * 1000);
@@ -916,14 +989,22 @@ async function processGroupedMessages(chatId) {
 
 async function processMessageWithBot(chatId, messageText, originalMessage) {
   try {
-    console.log(`🤖 Procesando con bot: ${chatId} - "${messageText.substring(0, 50)}..."`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`🤖 PROCESANDO CON BOT IA`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`Chat: ${chatId}`);
+    console.log(`Mensaje: "${messageText.substring(0, 100)}${messageText.length > 100 ? '...' : ''}"`);
+    console.log(`Modo: ${BOT_CONFIG.MODE.toUpperCase()}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     
     // Simular indicador de escritura (typing)
     if (BOT_CONFIG.TYPING_DELAY_MS > 0) {
+      console.log(`⌨️ Enviando indicador de escritura (${BOT_CONFIG.TYPING_DELAY_MS}ms)...`);
       try {
         if (!isClientReady || !sock) await ensureConnected(2, 1000);
         if (sock && typeof sock.sendPresenceUpdate === 'function') {
           await sock.sendPresenceUpdate('composing', chatId);
+          console.log(`✅ Indicador de escritura enviado`);
         }
       } catch (err) {
         console.warn('⚠️ No se pudo enviar presence update (composing):', err.message || err);
@@ -934,17 +1015,39 @@ async function processMessageWithBot(chatId, messageText, originalMessage) {
     
     // Extraer número de chatId (ej: 549123456789@s.whatsapp.net -> 549123456789)
     const numero = String(chatId).split('@')[0];
+    console.log(`📱 Número extraído: ${numero}`);
     
     let botReply = null;
     
     // ===== MODO OPENAI =====
     if (BOT_CONFIG.MODE === 'openai') {
-      console.log('🤖 Usando modo OpenAI...');
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`🧠 LLAMANDO A OPENAI`);
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`Modelo: ${process.env.OPENAI_MODEL || 'gpt-4o-mini'}`);
+      console.log(`Usuario: ${numero}`);
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      
       try {
+        const startTime = Date.now();
         botReply = await openaiAssistant.processMessage(chatId, messageText, numero);
-        console.log(`✅ Respuesta de OpenAI recibida: "${botReply?.substring(0, 50)}..."`);
+        const elapsedTime = Date.now() - startTime;
+        
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        console.log(`✅ RESPUESTA DE OPENAI RECIBIDA`);
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        console.log(`Tiempo: ${elapsedTime}ms`);
+        console.log(`Longitud: ${botReply?.length || 0} caracteres`);
+        console.log(`Respuesta: "${botReply?.substring(0, 150)}${botReply?.length > 150 ? '...' : ''}"`);
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       } catch (openaiError) {
-        console.error('❌ Error con OpenAI:', openaiError.message);
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        console.error('❌ ERROR EN OPENAI');
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        console.error('Tipo:', openaiError.name);
+        console.error('Mensaje:', openaiError.message);
+        console.error('Stack:', openaiError.stack?.substring(0, 300));
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
         botReply = null;
       }
     }
@@ -1015,17 +1118,36 @@ async function processMessageWithBot(chatId, messageText, originalMessage) {
     }
 
     if (!botReply) {
-      console.log('⚠️ No se obtuvo respuesta del bot, usando mensaje por defecto');
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log('⚠️ NO SE OBTUVO RESPUESTA');
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log('Usando mensaje por defecto...');
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       botReply = 'Lo siento, no pude procesar tu mensaje.';
     }
     
-    console.log(`📤 Enviando respuesta: "${botReply.substring(0, 50)}..."`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`📤 ENVIANDO RESPUESTA A WHATSAPP`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`Destino: ${chatId}`);
+    console.log(`Longitud: ${botReply.length} caracteres`);
+    console.log(`Respuesta: "${botReply.substring(0, 100)}${botReply.length > 100 ? '...' : ''}"`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     
     // Enviar respuesta usando sendMessage (maneja reconexión y reintentos)
     try {
+      const sendStartTime = Date.now();
       await sendMessage(chatId, botReply);
+      const sendElapsed = Date.now() - sendStartTime;
+      
       botStats.autoReplies++;
-      console.log(`✅ Respuesta enviada exitosamente`);
+      
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`✅ MENSAJE ENVIADO EXITOSAMENTE`);
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`Tiempo de envío: ${sendElapsed}ms`);
+      console.log(`Total respuestas automáticas: ${botStats.autoReplies}`);
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     } catch (sendErr) {
       console.error('❌ Error enviando respuesta del bot:', sendErr.message || sendErr);
       throw sendErr;
