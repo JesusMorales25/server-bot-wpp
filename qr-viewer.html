@@ -422,9 +422,9 @@
             </div>
         </div>
         <div class="buttons" id="buttons" style="display: none;">
-            <button class="btn-primary" onclick="refreshQR()"> Actualizar</button>
+            <button class="btn-primary" onclick="refreshQR()">🔄 Actualizar</button>
             <button class="btn-secondary" onclick="toggleBot()"><span id="botIcon"></span> <span id="botText">Bot</span></button>
-            <button class="btn-danger" onclick="logout()"> Salir</button>
+            <button class="btn-danger" onclick="logout()">🚪 Salir</button>
         </div>
     </div>
     <script>
@@ -442,6 +442,34 @@
                 await loadQR();
             } catch (e) {}
         }
+        
+        async function restartQRTimer() {
+            if (!confirm('¿Reiniciar el timer del QR? Obtendrás 10 minutos nuevos para escanear.')) return;
+            
+            try {
+                const btn = event.target;
+                btn.disabled = true;
+                btn.textContent = '⏳ Reiniciando...';
+                
+                const res = await fetch('/api/whatsapp/restart-qr-timer', { 
+                    method: 'POST', 
+                    credentials: 'include' 
+                });
+                
+                if (res.ok) {
+                    alert('✅ Timer reiniciado! Tendrás 10 minutos nuevos.\n\nEspera 3 segundos y verás el nuevo QR.');
+                    setTimeout(() => loadQR(), 3000);
+                } else {
+                    alert('❌ Error al reiniciar timer');
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Obtener 10 minutos nuevos';
+                }
+            } catch (e) {
+                alert('❌ Error de conexión');
+                console.error(e);
+            }
+        }
+        
         async function loadQR() {
             try {
                 const res = await fetch('/api/whatsapp/status', { credentials: 'include' });
@@ -494,6 +522,20 @@
                     </div>
                 `;
             } else if (data.qrCode) {
+                // Construir info de tiempo
+                let timeDisplay = '~60s';
+                let qrInfo = `Intento #${data.qrAttempts||1}`;
+                
+                if (data.qrTimeRemaining) {
+                    if (data.qrTimeRemaining.expired) {
+                        timeDisplay = '⏰ Expirado';
+                        qrInfo = 'Tiempo agotado';
+                    } else {
+                        timeDisplay = data.qrTimeRemaining.displayTime || '~60s';
+                        qrInfo = `QR #${data.qrAttempts||1}`;
+                    }
+                }
+                
                 content.innerHTML = `
                     <div id="qrCode"><img src="${data.qrCode}" alt="QR Code"></div>
                     <div class="instructions">
@@ -506,9 +548,23 @@
                         </ol>
                     </div>
                     <div class="info-grid">
-                        <div class="info-card"><div class="info-label">🔄 Intento</div><div class="info-value">${data.qrAttempts||0}/${data.maxQrAttempts||10}</div></div>
-                        <div class="info-card"><div class="info-label">⏰ Validez</div><div class="info-value">~60s</div></div>
+                        <div class="info-card">
+                            <div class="info-label">🔄 Estado</div>
+                            <div class="info-value" style="font-size:16px;">${qrInfo}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">⏰ Tiempo</div>
+                            <div class="info-value" style="font-size:16px;">${timeDisplay}</div>
+                        </div>
                     </div>
+                    ${data.qrTimeRemaining && data.qrTimeRemaining.expired ? `
+                        <div style="background:#fef2f2;padding:16px;border-radius:12px;margin-top:16px;text-align:center;">
+                            <p style="color:#dc2626;font-weight:600;margin-bottom:8px;">⏰ Tiempo agotado (10 minutos)</p>
+                            <button class="btn-primary" onclick="restartQRTimer()" style="margin:8px auto 0;">
+                                🔄 Obtener 10 minutos nuevos
+                            </button>
+                        </div>
+                    ` : ''}
                 `;
             } else {
                 content.innerHTML = '<div class="loading"><div class="spinner"></div><p style="color:#64748b;font-weight:500;">Generando código QR...</p></div>';
