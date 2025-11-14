@@ -1,1 +1,1 @@
-web: node whatsapp-qr-server.js
+web: node whatsapp-baileys-server.js
